@@ -1,16 +1,25 @@
-var store = {};
+var store = (function Store() {
 
+  var api = 'http://mcs.shuvalov.info/a8h333.tasks/';
 
-store.save = function() {
-  var json = JSON.stringify(tasks.list);
-  localStorage.setItem('tasks', json);
-}
-
-store.load = function() {
-  var savedTasks = localStorage.getItem('tasks');
-  if (savedTasks) tasks.list = JSON.parse(savedTasks);
-}
-
+  return {
+    save: function(task) {
+      var url = api;
+      if (task.id) { url += task.id; }
+      $.post(url, task, function(response) {
+        task.id = response.id;
+        app.render();
+      });
+    },
+    load: function() {
+      $.get(api, function(response) {
+        console.log(response);
+        tasks.list = response;
+        app.render();
+      });
+    }
+  };
+})();
 
 tasks.on('add', store.save);
 tasks.on('close', store.save);

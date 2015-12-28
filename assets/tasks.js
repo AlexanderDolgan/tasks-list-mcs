@@ -1,35 +1,24 @@
 var tasks = {}
 
-/**
- * Список задач
- */
 tasks.list = [];
-
-/**
- * Объект с событиями
- */
 tasks.events = {};
 
-/**
- * Добавление задачи
- */
 tasks.add = function(description) {
-  tasks.list.push({ description: description, id: tasks.list.length });
-  tasks.trigger('add');
+  var pos = tasks.list.length;
+  tasks.list.push({ description: description });
+  tasks.trigger('add', tasks.list[pos]);
 }
 
-/**
- * Закрытия задачи
- */
 tasks.close = function(id) {
-  id = Number(id);
-  tasks.list[id].closed = true;
-  tasks.trigger('close');
+  // id = Number(id);
+  var task = tasks.list.filter(function(task) {
+    return task.id == id;
+  })[0];
+  if (!task) return;
+  task.closed = true;
+  tasks.trigger('close', task);
 }
 
-/**
- * Возвращает список задач
- */
 tasks.show = function(id) {
   if (typeof id === 'number') {
     return tasks.list[id];
@@ -46,34 +35,28 @@ tasks.show = function(id) {
   }
 };
 
-/**
- * Записывает колбек на событие
- */
-tasks.on = function(name, fn) {
-  if (!tasks.events[name]) tasks.events[name] = [];
-  tasks.events[name].push(fn);
-}
-
-/**
- * Вызывает коллбеки, которые были записаны на событие
- */
-tasks.trigger = function(name) {
-  if (!tasks.events[name]) return;
-  tasks.events[name].map(function(fn) { fn(); });
-}
-
-/**
- * Показывает сколько всего тасок, сколько закрыто, сколько открыто
- */
 tasks.counters = function() {
   var all = tasks.list.length;
-  var closed = tasks.list.filter(function (task) {
-    return task.closed;
-  }).length;
+  var closed = tasks.show().length;
   var opened = all - closed;
   return {
     all: all,
-    closed: closed,
-    opened: opened
-  };
+    opened: opened,
+    closed: closed
+  }
+}
+
+tasks.on = function(event, callback) {
+  if (!tasks.events[event]) {
+    tasks.events[event] = [];
+  }
+  tasks.events[event].push(callback);
+}
+
+
+tasks.trigger = function(event, data) {
+  if (!tasks.events[event]) { return; }
+  tasks.events[event].map(function(callback){
+    callback(data);
+  })
 }
